@@ -1,3 +1,4 @@
+
 name: Build Project StreetLife APK
 
 on:
@@ -12,29 +13,34 @@ jobs:
     runs-on: ubuntu-24.04
     container:
       image: barichello/godot-ci:4.3
+
     steps:
       - name: Checkout project
         uses: actions/checkout@v4
 
-      - name: Prepare Godot export templates and settings
+      - name: Configure Godot Android environment
         run: |
-          mkdir -p ~/.local/share/godot/export_templates ~/.config
-          if [ -d /root/.config/godot ]; then
-            cp -a /root/.config/godot ~/.config/godot
-          fi
-          if [ -d "/root/.local/share/godot/export_templates/4.3.stable" ]; then
-            cp -a /root/.local/share/godot/export_templates/4.3.stable ~/.local/share/godot/export_templates/
-          fi
-          mkdir -p build
-          echo 'export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"' >> ~/.config/godot/editor_settings-4.3.tres
+          mkdir -p ~/.config/godot
+          mkdir -p ~/.local/share/godot/export_templates
 
-      - name: Import project
+          cp /root/.config/godot/editor_settings-4.3.tres \
+            ~/.config/godot/editor_settings-4.3.tres
+
+          cp -a /root/.local/share/godot/export_templates/4.3.stable \
+            ~/.local/share/godot/export_templates/
+
+          echo 'export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"' >> ~/.config/godot/editor_settings-4.3.tres
+          echo 'export/android/android_sdk_path = "/usr/lib/android-sdk"' >> ~/.config/godot/editor_settings-4.3.tres
+
+          mkdir -p build
+
+      - name: Import Godot project
         run: godot --headless --editor --path . --quit
 
-      - name: Export debug APK
+      - name: Export Android APK
         run: godot --headless --path . --export-debug "Android" build/ProjectStreetLife.apk
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: ProjectStreetLife-Android-APK
